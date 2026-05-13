@@ -1,0 +1,14 @@
+interface:
+  display_name: "MiMo Vision MCP"
+  short_description: "Analyze images through local MiMo MCP"
+  default_prompt: "Use $mimo-vision-mcp to analyze this image with the configured vision MCP and return semantic HTML evidence."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "mimo-vision"
+      description: "Local MCP server exposing mimo_understand_image and mimo_get_model_info."
+      transport: "stdio"
+
+policy:
+  allow_implicit_invocation: true
