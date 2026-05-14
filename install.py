@@ -160,6 +160,29 @@ def build_kilo_json(config: InstallConfig) -> dict[str, Any]:
     }
 
 
+def build_openclaw_json(config: InstallConfig) -> dict[str, Any]:
+    server = {
+        "command": config.python_path,
+        "args": [config.server_path],
+        "env": _env(config),
+        "cwd": _path_text(ROOT),
+    }
+    return {
+        "mcp": {
+            "servers": {
+                SERVER_NAME: server,
+            }
+        },
+        "skills": {
+            "entries": {
+                SERVER_NAME: {
+                    "enabled": True,
+                }
+            }
+        },
+    }
+
+
 def _strip_jsonc_comments(text: str) -> str:
     output: list[str] = []
     i = 0
@@ -210,6 +233,15 @@ def _backup(path: Path) -> Path | None:
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     backup = path.with_name(f"{path.name}.bak-{timestamp}")
     shutil.copy2(path, backup)
+    return backup
+
+
+def _backup_directory(path: Path) -> Path | None:
+    if not path.exists():
+        return None
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup = path.with_name(f"{path.name}.bak-{timestamp}")
+    shutil.copytree(path, backup)
     return backup
 
 
@@ -323,27 +355,119 @@ def install_kilo(config: InstallConfig, yes: bool, dry_run: bool) -> None:
     _write_json(path, merged, yes, dry_run)
 
 
+def _deep_merge(base: dict[str, Any], patch: dict[str, Any]) -> dict[str, Any]:
+    for key, value in patch.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+def _openclaw_config_path() -> Path:
+    configured = os.environ.get("OPENCLAW_CONFIG_PATH")
+    if configured:
+        return Path(configured).expanduser()
+    return Path.home() / ".openclaw" / "openclaw.json"
+
+
+def _install_openclaw_skill(yes: bool, dry_run: bool) -> None:
+    source = ROOT / "skills" / SERVER_NAME
+    target = Path.home() / ".openclaw" / "skills" / SERVER_NAME
+    print(f"--- OpenClaw skill target: {target} ---")
+    if dry_run:
+        print(f"Would copy {source} -> {target}")
+        return
+    if not _confirm(f"Install OpenClaw skill to {target}?", yes):
+        print("Skipped OpenClaw skill copy.")
+        return
+    target.parent.mkdir(parents=True, exist_ok=True)
+    backup = _backup_directory(target)
+    if target.exists():
+        shutil.rmtree(target)
+    shutil.copytree(source, target)
+    if backup:
+        print(f"Backup: {backup}")
+    print(f"Wrote: {target}")
+
+
+def _install_openclaw_config_via_cli(config: InstallConfig, openclaw: str, yes: bool, dry_run: bool) -> bool:
+    server_payload = json.dumps(build_openclaw_json(config)["mcp"]["servers"][SERVER_NAME], ensure_ascii=False)
+    print("--- OpenClaw MCP target: openclaw mcp set ---")
+    print(json.dumps(build_openclaw_json(config), ensure_ascii=False, indent=2))
+    if dry_run:
+        print(f"Would run: openclaw mcp set {SERVER_NAME} '<json>'")
+        print(f"Would run: openclaw config set 'skills.entries[\"{SERVER_NAME}\"].enabled' true --strict-json")
+        return True
+    if not _confirm("Run OpenClaw CLI config writes?", yes):
+        print("Skipped OpenClaw MCP config.")
+        return True
+    config_path = _openclaw_config_path()
+    backup = _backup(config_path)
+    subprocess.run([openclaw, "mcp", "set", SERVER_NAME, server_payload], check=True)
+    subprocess.run(
+        [openclaw, "config", "set", f'skills.entries["{SERVER_NAME}"].enabled', "true", "--strict-json"],
+        check=True,
+    )
+    if backup:
+        print(f"Backup: {backup}")
+    print("OpenClaw MCP server registered.")
+    return True
+
+
+def _install_openclaw_config_direct(config: InstallConfig, yes: bool, dry_run: bool) -> None:
+    path = _openclaw_config_path()
+    patch = build_openclaw_json(config)
+    print(f"--- OpenClaw config target: {path} ---")
+    if dry_run:
+        print(json.dumps(patch, ensure_ascii=False, indent=2))
+        return
+    if path.exists():
+        try:
+            current = _load_jsonc(path)
+        except json.JSONDecodeError:
+            print("OpenClaw CLI was not found and existing openclaw.json is not strict JSON/JSONC.")
+            print("Add this config manually:")
+            print(json.dumps(patch, ensure_ascii=False, indent=2))
+            return
+    else:
+        current = {}
+    next_config = _deep_merge(current, patch)
+    _write_json(path, next_config, yes, False)
+
+
+def install_openclaw(config: InstallConfig, yes: bool, dry_run: bool) -> None:
+    _install_openclaw_skill(yes, dry_run)
+    openclaw = shutil.which("openclaw")
+    if openclaw:
+        _install_openclaw_config_via_cli(config, openclaw, yes, dry_run)
+    else:
+        print("OpenClaw CLI not found; falling back to direct openclaw.json merge when possible.")
+        _install_openclaw_config_direct(config, yes, dry_run)
+
+
 def detect_clients(project_dir: Path) -> dict[str, bool]:
     return {
         "codex": (Path.home() / ".codex").exists(),
         "claude-code": bool(shutil.which("claude") or (Path.home() / ".claude.json").exists()),
         "vscode": bool(shutil.which("code") or (project_dir / ".vscode").exists()),
         "kilo": bool((Path.home() / ".config" / "kilo").exists() or (project_dir / ".kilo").exists()),
+        "openclaw": bool(shutil.which("openclaw") or (Path.home() / ".openclaw").exists()),
     }
 
 
 def _resolve_clients(args: argparse.Namespace, project_dir: Path) -> list[str]:
     if args.client:
-        return ["codex", "claude-code", "vscode", "kilo"] if args.client == "all" else [args.client]
+        return ["codex", "claude-code", "vscode", "kilo", "openclaw"] if args.client == "all" else [args.client]
     detected = detect_clients(project_dir)
     print("Detected clients:")
     for client, present in detected.items():
         print(f"  {client}: {'yes' if present else 'no'}")
     answer = _prompt("Clients to configure (comma-separated, or all)", "codex")
     if answer == "all":
-        return ["codex", "claude-code", "vscode", "kilo"]
+        return ["codex", "claude-code", "vscode", "kilo", "openclaw"]
     clients = [item.strip() for item in answer.split(",") if item.strip()]
-    invalid = sorted(set(clients) - {"codex", "claude-code", "vscode", "kilo"})
+    invalid = sorted(set(clients) - {"codex", "claude-code", "vscode", "kilo", "openclaw"})
     if invalid:
         raise SystemExit(f"Unknown client(s): {', '.join(invalid)}")
     return clients
@@ -351,7 +475,7 @@ def _resolve_clients(args: argparse.Namespace, project_dir: Path) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Install VisionPower MCP config for supported clients.")
-    parser.add_argument("--client", choices=["codex", "claude-code", "vscode", "kilo", "all"])
+    parser.add_argument("--client", choices=["codex", "claude-code", "vscode", "kilo", "openclaw", "all"])
     parser.add_argument("--dry-run", action="store_true", help="Print the config that would be written.")
     parser.add_argument("-y", "--yes", action="store_true", help="Do not prompt before writing.")
     parser.add_argument("--api-key", help="Vision API key. Omit in dry-run examples.")
@@ -372,6 +496,7 @@ def main() -> int:
         "claude-code": install_claude_code,
         "vscode": install_vscode,
         "kilo": install_kilo,
+        "openclaw": install_openclaw,
     }
     for client in clients:
         installers[client](config, args.yes, args.dry_run)

@@ -25,6 +25,18 @@ VisionPower supports two upstream API protocols:
 
 These base URLs are not interchangeable. Pick the protocol that matches the provider endpoint.
 
+## Download the Whole Repository
+
+Do not download only `mcp/` or only `skills/vision-power/`. VisionPower needs the complete repository because the installer, examples, MCP server, skill, and tests reference each other by repo-relative paths.
+
+Use one of these full-repo methods:
+
+```powershell
+git clone git@github.com:theAmiwill/VisionPower.git
+```
+
+or download the repository ZIP from GitHub and extract the whole `VisionPower/` folder. After moving machines, rerun `mcp/setup.bat` or `mcp/setup.sh`, then rerun `install.py` so client configs point at the new absolute paths.
+
 ## Repository Layout
 
 ```text
@@ -44,7 +56,8 @@ VisionPower/
 │   ├── codex.config.toml
 │   ├── claude-code.mcp.json
 │   ├── vscode.mcp.json
-│   └── kilo.jsonc
+│   ├── kilo.jsonc
+│   └── openclaw.openclaw.json
 └── tests/
 ```
 
@@ -78,6 +91,7 @@ python install.py --client codex
 python install.py --client claude-code
 python install.py --client vscode
 python install.py --client kilo
+python install.py --client openclaw
 python install.py --client all
 ```
 
@@ -117,6 +131,7 @@ VISION_POWER_TIMEOUT=120
 - Claude Code: `claude mcp add-json --scope user` when the CLI is available; otherwise use `examples/claude-code.mcp.json`.
 - GitHub Copilot / VS Code: `.vscode/mcp.json` with root key `servers`, see `examples/vscode.mcp.json`.
 - Kilo Code: `~/.config/kilo/kilo.jsonc` or project `.kilo/kilo.jsonc` with root key `mcp`, see `examples/kilo.jsonc`.
+- OpenClaw: copies the skill to `~/.openclaw/skills/vision-power` and registers `mcp.servers.vision-power`, see `examples/openclaw.openclaw.json`.
 
 Run dry-runs before writing:
 
@@ -124,9 +139,12 @@ Run dry-runs before writing:
 python install.py --client codex --dry-run
 python install.py --client vscode --dry-run
 python install.py --client kilo --dry-run
+python install.py --client openclaw --dry-run
 ```
 
 The installer creates a timestamped backup before overwriting an existing config file.
+
+For OpenClaw, the installer prefers `openclaw mcp set vision-power <json>` when the CLI exists. If the CLI is missing, it tries to merge `~/.openclaw/openclaw.json`; if the existing file uses JSON5 syntax the fallback cannot safely parse, it prints the exact config fragment for manual insertion.
 
 ## Migration From Old MiMo-Bound Names
 
@@ -156,4 +174,5 @@ Do not configure the main reasoning model in this project. Codex, Claude Code, V
 .\mcp\.venv\Scripts\python.exe install.py --client claude-code --dry-run
 .\mcp\.venv\Scripts\python.exe install.py --client vscode --dry-run
 .\mcp\.venv\Scripts\python.exe install.py --client kilo --dry-run
+.\mcp\.venv\Scripts\python.exe install.py --client openclaw --dry-run
 ```

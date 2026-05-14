@@ -57,6 +57,13 @@ class InstallerShapeTests(unittest.TestCase):
         self.assertIsInstance(data["mcp"]["vision-power"]["command"], list)
         self.assertEqual(data["mcp"]["vision-power"]["timeout"], 120000)
 
+    def test_openclaw_uses_mcp_servers_and_skill_entry(self):
+        data = installer.build_openclaw_json(make_config())
+        self.assertIn("servers", data["mcp"])
+        self.assertIn("vision-power", data["mcp"]["servers"])
+        self.assertEqual(data["mcp"]["servers"]["vision-power"]["env"]["VISION_POWER_API_PROTOCOL"], "openai")
+        self.assertTrue(data["skills"]["entries"]["vision-power"]["enabled"])
+
 
 if __name__ == "__main__":
     unittest.main()

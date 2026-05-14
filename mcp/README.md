@@ -4,6 +4,10 @@ This MCP server calls a configured vision-language model and returns semantic HT
 
 It configures only the **vision model**. The current session's **main reasoning model** is selected by the MCP client and receives the returned HTML as normal tool output.
 
+## Install From the Full Repository
+
+Do not copy only this `mcp/` folder. Use the complete `VisionPower/` repository so `install.py`, `skills/vision-power/`, examples, and tests stay together. After copying to another machine, rerun setup and the root installer so client configs point at the new absolute paths.
+
 ## Tools
 
 | Tool | Purpose | Read-only |
@@ -88,7 +92,7 @@ On Windows, use `.venv\Scripts\python.exe` for the `uv pip install --python` pat
 }
 ```
 
-Prefer the repository-level `install.py` for Codex, Claude Code, VS Code/GitHub Copilot, and Kilo Code.
+Prefer the repository-level `install.py` for Codex, Claude Code, VS Code/GitHub Copilot, Kilo Code, and OpenClaw.
 
 ## Troubleshooting
 
