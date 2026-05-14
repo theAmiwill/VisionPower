@@ -1,0 +1,14 @@
+interface:
+  display_name: "VisionPower"
+  short_description: "Analyze images through a local vision MCP"
+  default_prompt: "Use $vision-power to analyze this image with the configured VisionPower MCP and reason from the returned semantic HTML evidence."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "vision-power"
+      description: "Local MCP server exposing understand_image and get_vision_config."
+      transport: "stdio"
+
+policy:
+  allow_implicit_invocation: true

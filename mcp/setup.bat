@@ -1,8 +1,8 @@
 @echo off
-REM MiMo Vision MCP Server ? Setup Script
+REM VisionPower MCP Server Setup Script
 REM Requires: Python 3.10+, uv (https://docs.astral.sh/uv/)
 
-echo === MiMo Vision MCP Server Setup ===
+echo === VisionPower MCP Server Setup ===
 
 REM Check uv
 where uv >nul 2>&1
@@ -36,23 +36,26 @@ echo === Setup complete ===
 echo.
 set "SCRIPT_DIR=%CD:\=/%"
 echo Next steps:
-echo   1. Copy .env.example to .env and fill in your API key
-echo   2. Add the following to your ~/.mcp.json:
+echo   1. From the repository root, run: python install.py
+echo   2. Or add the following to your MCP client config:
 echo.
 echo   {
 echo     "mcpServers": {
-echo       "mimo-vision": {
+echo       "vision-power": {
+echo         "type": "stdio",
 echo         "command": "%SCRIPT_DIR%/.venv/Scripts/python.exe",
 echo         "args": ["%SCRIPT_DIR%/server.py"],
 echo         "env": {
-echo           "MIMO_VISION_API_KEY": "YOUR_KEY_HERE",
-echo           "MIMO_VISION_MODEL": "mimo-v2.5",
-echo           "MIMO_VISION_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1"
+echo           "VISION_POWER_API_KEY": "YOUR_KEY_HERE",
+echo           "VISION_POWER_MODEL": "mimo-v2.5",
+echo           "VISION_POWER_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1",
+echo           "VISION_POWER_API_PROTOCOL": "openai",
+echo           "VISION_POWER_TIMEOUT": "120"
 echo         }
 echo       }
 echo     }
 echo   }
 echo.
-echo   3. Restart Claude Code
+echo   3. Restart your MCP client
 echo.
 pause

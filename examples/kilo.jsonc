@@ -1,0 +1,20 @@
+{
+  "mcp": {
+    "vision-power": {
+      "type": "local",
+      "command": [
+        "C:/path/to/VisionPower/mcp/.venv/Scripts/python.exe",
+        "C:/path/to/VisionPower/mcp/server.py"
+      ],
+      "environment": {
+        "VISION_POWER_API_KEY": "{env:VISION_POWER_API_KEY}",
+        "VISION_POWER_MODEL": "mimo-v2.5",
+        "VISION_POWER_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1",
+        "VISION_POWER_API_PROTOCOL": "openai",
+        "VISION_POWER_TIMEOUT": "120"
+      },
+      "enabled": true,
+      "timeout": 120000
+    }
+  }
+}
