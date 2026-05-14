@@ -26,12 +26,12 @@ The MCP client config should run the local server:
 {
   "mcpServers": {
     "mimo-vision": {
-      "command": "C:/path/to/VisionPower/mcp/.venv/Scripts/python.exe",
-      "args": ["C:/path/to/VisionPower/mcp/server.py"],
+      "command": "D:/workfile/mimo-vision-mcp/.venv/Scripts/python.exe",
+      "args": ["D:/workfile/mimo-vision-mcp/server.py"],
       "env": {
         "MIMO_VISION_API_KEY": "your-vision-api-key",
-        "MIMO_VISION_MODEL": "mimo-v2.5-pro",
-        "MIMO_VISION_API_BASE_URL": "https://api.xiaomimimo.com/v1",
+        "MIMO_VISION_MODEL": "mimo-v2.5",
+        "MIMO_VISION_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1",
         "MIMO_VISION_TIMEOUT": "120"
       }
     }

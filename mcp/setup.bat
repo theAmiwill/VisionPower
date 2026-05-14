@@ -46,8 +46,8 @@ echo         "command": "%SCRIPT_DIR%/.venv/Scripts/python.exe",
 echo         "args": ["%SCRIPT_DIR%/server.py"],
 echo         "env": {
 echo           "MIMO_VISION_API_KEY": "YOUR_KEY_HERE",
-echo           "MIMO_VISION_MODEL": "mimo-v2.5-pro",
-echo           "MIMO_VISION_API_BASE_URL": "https://api.xiaomimimo.com/v1"
+echo           "MIMO_VISION_MODEL": "mimo-v2.5",
+echo           "MIMO_VISION_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1"
 echo         }
 echo       }
 echo     }

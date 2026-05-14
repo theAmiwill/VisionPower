@@ -11,7 +11,7 @@
       ↓
 mimo_understand_image (本 MCP)
       ↓
-调用视觉语言模型 (mimo-v2.5-pro / 可切换)
+调用视觉语言模型 (mimo-v2.5 / 可切换)
       ↓
 返回语义 HTML (data-bbox, confidence, uncertainties)
       ↓
@@ -80,12 +80,12 @@ cp .env.example .env
 {
   "mcpServers": {
     "mimo-vision": {
-      "command": "C:/path/to/VisionPower/mcp/.venv/Scripts/python.exe",
-      "args": ["C:/path/to/VisionPower/mcp/server.py"],
+      "command": "C:\\path\\to\\mimo-vision-mcp\\.venv\\Scripts\\python.exe",
+      "args": ["C:\\path\\to\\mimo-vision-mcp\\server.py"],
       "env": {
         "MIMO_VISION_API_KEY": "你的API_KEY",
-        "MIMO_VISION_MODEL": "mimo-v2.5-pro",
-        "MIMO_VISION_API_BASE_URL": "https://api.xiaomimimo.com/v1"
+        "MIMO_VISION_MODEL": "mimo-v2.5",
+        "MIMO_VISION_API_BASE_URL": "https://token-plan-cn.xiaomimimo.com/v1"
       }
     }
   }
@@ -128,7 +128,7 @@ Base64:   iVBORw0KGgo...
 
 | 模型 | API 地址 |
 |------|----------|
-| mimo-v2.5-pro | `https://api.xiaomimimo.com/v1` |
+| mimo-v2.5 | `https://token-plan-cn.xiaomimimo.com/v1` |
 | GPT-4o | `https://api.openai.com/v1` |
 | Claude (Anthropic) | 需适配 Anthropic 格式 |
 | Qwen2.5-VL | 自部署或 DashScope |
@@ -138,12 +138,12 @@ Base64:   iVBORw0KGgo...
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `MIMO_VISION_API_BASE_URL` | `https://api.xiaomimimo.com/v1` | 识图 API 端点 (OpenAI 兼容) |
+| `MIMO_VISION_API_BASE_URL` | `https://token-plan-cn.xiaomimimo.com/v1` | 识图 API 端点 (OpenAI 兼容) |
 | `MIMO_VISION_API_KEY` | (必填) | 识图 API 密钥 |
-| `MIMO_VISION_MODEL` | `mimo-v2.5-pro` | 默认识图模型名称 |
+| `MIMO_VISION_MODEL` | `mimo-v2.5` | 默认识图模型名称 |
 | `MIMO_VISION_TIMEOUT` | `120` | 识图请求超时 (秒) |
 
-> 注意：主聊天模型能使用 `mimo-v2.5-pro`，不代表 MCP 子进程会自动继承同一套凭据。`mimo-vision` MCP 必须在 `.mcp.json` 的 `env` 里单独传入对 `MIMO_VISION_API_BASE_URL` 有效的 `MIMO_VISION_API_KEY`。
+> 注意：主聊天模型能使用 `mimo-v2.5`，不代表 MCP 子进程会自动继承同一套凭据。`mimo-vision` MCP 必须在 `.mcp.json` 的 `env` 里单独传入对 `MIMO_VISION_API_BASE_URL` 有效的 `MIMO_VISION_API_KEY`。
 
 ## 文件结构
 

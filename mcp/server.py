@@ -2,7 +2,7 @@
 """
 MiMo Vision MCP Server.
 
-Calls a configurable vision-language model (default: mimo-v2.5-pro) to understand images,
+Calls a configurable vision-language model (default: mimo-v2.5) to understand images,
 then returns semantic HTML with structured metadata for downstream text-model reasoning.
 """
 
@@ -23,8 +23,8 @@ from mcp.server.fastmcp import FastMCP
 # configured by this server.
 # ---------------------------------------------------------------------------
 
-DEFAULT_API_BASE_URL = "https://api.xiaomimimo.com/v1"
-DEFAULT_MODEL = "mimo-v2.5-pro"
+DEFAULT_API_BASE_URL = "https://token-plan-cn.xiaomimimo.com/v1"
+DEFAULT_MODEL = "mimo-v2.5"
 DEFAULT_TIMEOUT = 120.0
 
 VISION_MODEL = os.environ.get("MIMO_VISION_MODEL", DEFAULT_MODEL)
