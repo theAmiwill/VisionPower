@@ -131,6 +131,23 @@ For Claude Code with MiniMax as the **main model**, configure Claude Code with M
 
 VisionPower validates that the upstream response is semantic HTML and that it does not look like a "no image received" response. If a text-only model returns plain text or says it cannot see the image, VisionPower reports a configuration error instead of passing weak evidence to the main model.
 
+## Passing Images From Text-Only Main Models
+
+When the current main model cannot accept image attachments, do not upload the image directly to the MCP client chat. Some clients try to include uploaded attachments in the main model request before the model can call MCP tools. That can fail before VisionPower is invoked, with errors such as:
+
+```text
+There's an issue with the selected model (...). It may not exist or you may not have access to it. Run /model to pick a different model.
+```
+
+Save the image as a local file and send its path as text instead:
+
+```text
+Please use vision-power understand_image to analyze:
+C:\Users\WILL\OneDrive\Desktop\screenshot.png
+```
+
+The main model receives only text, then VisionPower reads the file path and sends the image to the configured vision model. This keeps text-only main models separate from image-capable upstream vision models.
+
 ## Client Formats
 
 - Codex: `~/.codex/config.toml`, see `examples/codex.config.toml`.

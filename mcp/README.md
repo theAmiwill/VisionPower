@@ -32,6 +32,17 @@ For Anthropic-compatible providers, VisionPower accepts either a base URL ending
 
 The server also rejects non-HTML upstream outputs. A valid response must contain an `<article>` element because the downstream main model relies on semantic HTML evidence rather than free-form text.
 
+## Passing Images
+
+Pass images to `understand_image` as:
+
+- absolute local file paths
+- HTTP(S) URLs
+- `data:image/*;base64,...` URIs
+- raw base64 strings
+
+If the MCP client's current main model is text-only, do not upload the image as a chat attachment. The client may send that attachment to the main model before MCP tools run, causing a model-selection or access error. Put the image on disk and pass the path as text so VisionPower can read it.
+
 ## Environment Variables
 
 | Variable | Default | Description |

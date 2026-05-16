@@ -23,12 +23,21 @@ If these tools are unavailable, tell the user the `vision-power` MCP server is n
 ## Workflow
 
 1. For image, screenshot, chart, UI, diagram, table-image, or OCR requests, call `understand_image`.
-2. Pass `image` as an absolute local path, HTTP(S) URL, data URI, or raw base64 string.
-3. Write `question` as the exact visual task the user wants answered.
-4. Keep `include_json_metadata=true` unless the user explicitly wants a very short visual description.
-5. Use default `max_tokens` for detailed UI, chart, or diagram analysis; lower it only for simple OCR or short descriptions.
-6. Read the returned semantic HTML as evidence. Use `data-bbox`, `data-confidence`, `data-type`, `text-content`, `layout`, and `uncertainties` when reasoning.
-7. Answer from the HTML, and mention uncertainty when low-confidence or ambiguous items appear.
+2. If the image arrives as a chat attachment and the current main model may be text-only, ask for or use the saved local file path instead of reasoning over the attachment directly.
+3. Pass `image` as an absolute local path, HTTP(S) URL, data URI, or raw base64 string.
+4. Write `question` as the exact visual task the user wants answered.
+5. Keep `include_json_metadata=true` unless the user explicitly wants a very short visual description.
+6. Use default `max_tokens` for detailed UI, chart, or diagram analysis; lower it only for simple OCR or short descriptions.
+7. Read the returned semantic HTML as evidence. Use `data-bbox`, `data-confidence`, `data-type`, `text-content`, `layout`, and `uncertainties` when reasoning.
+8. Answer from the HTML, and mention uncertainty when low-confidence or ambiguous items appear.
+
+## Attachment Boundary
+
+Some MCP clients send uploaded image attachments to the current main model before tool calls are considered. If that main model is text-only, the client can fail before VisionPower runs. Prefer this user-facing pattern:
+
+`Save the image locally, then ask me to call vision-power with the absolute file path.`
+
+Do not infer that a `/model` error came from VisionPower if it appears immediately after uploading an image. VisionPower only runs after the main model successfully receives the text request and calls `understand_image`.
 
 ## Tool Arguments
 
