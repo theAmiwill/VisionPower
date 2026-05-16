@@ -125,6 +125,12 @@ VISION_POWER_API_PROTOCOL=openai
 VISION_POWER_TIMEOUT=120
 ```
 
+Use a model that actually accepts image input for `VISION_POWER_MODEL`. Text/coding models can still be excellent **main reasoning models** in Claude Code or other clients, but they are not valid VisionPower upstream models if their API ignores `image_url` or image content blocks. For example, MiniMax-M2.7 is documented for coding/text workflows and can be used as a main model in compatible clients, but its OpenAI-compatible and Anthropic-compatible text APIs do not currently support image inputs.
+
+For Claude Code with MiniMax as the **main model**, configure Claude Code with MiniMax's Anthropic-compatible endpoint, such as `https://api.minimaxi.com/anthropic` for Mainland China or `https://api.minimax.io/anthropic` for Global. Keep VisionPower configured separately with a vision-capable model.
+
+VisionPower validates that the upstream response is semantic HTML and that it does not look like a "no image received" response. If a text-only model returns plain text or says it cannot see the image, VisionPower reports a configuration error instead of passing weak evidence to the main model.
+
 ## Client Formats
 
 - Codex: `~/.codex/config.toml`, see `examples/codex.config.toml`.

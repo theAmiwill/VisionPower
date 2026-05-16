@@ -26,6 +26,12 @@ Set `VISION_POWER_API_PROTOCOL` to match the provider endpoint:
 
 Base URLs for OpenAI-compatible and Anthropic-compatible endpoints are not universal. Use the one that matches the selected protocol.
 
+For Anthropic-compatible providers, VisionPower accepts either a base URL ending before `/v1` or one ending in `/v1`; it will try the provider's `/messages` endpoint and fall back to `/v1/messages` on a 404. This handles providers such as MiniMax that document `https://api.minimaxi.com/anthropic` as the Anthropic base URL.
+
+`VISION_POWER_MODEL` must be image-capable. Text-only coding models may return a normal-looking response that says no image was received; VisionPower treats those as configuration errors instead of successful image understanding.
+
+The server also rejects non-HTML upstream outputs. A valid response must contain an `<article>` element because the downstream main model relies on semantic HTML evidence rather than free-form text.
+
 ## Environment Variables
 
 | Variable | Default | Description |

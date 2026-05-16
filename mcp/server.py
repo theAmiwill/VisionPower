@@ -311,6 +311,14 @@ def _build_anthropic_payload(image: PreparedImage, question: str, max_tokens: in
     }
 
 
+def _anthropic_messages_endpoints(base_url: str) -> list[str]:
+    base = base_url.rstrip("/")
+    endpoints = [f"{base}/messages"]
+    if not base.endswith("/v1"):
+        endpoints.append(f"{base}/v1/messages")
+    return endpoints
+
+
 def _extract_openai_text(data: dict[str, Any]) -> str:
     try:
         content = data["choices"][0]["message"]["content"]
@@ -355,7 +363,7 @@ async def _call_vlm(image: PreparedImage, question: str, max_tokens: int) -> str
         raise ValueError("VISION_POWER_API_BASE_URL must start with http:// or https://.")
 
     if VISION_API_PROTOCOL == "anthropic":
-        endpoint = f"{VISION_API_BASE_URL}/messages"
+        endpoints = _anthropic_messages_endpoints(VISION_API_BASE_URL)
         headers = {
             "x-api-key": VISION_API_KEY,
             "anthropic-version": "2023-06-01",
@@ -364,7 +372,7 @@ async def _call_vlm(image: PreparedImage, question: str, max_tokens: int) -> str
         payload = _build_anthropic_payload(image, question, max_tokens)
         extractor = _extract_anthropic_text
     else:
-        endpoint = f"{VISION_API_BASE_URL}/chat/completions"
+        endpoints = [f"{VISION_API_BASE_URL}/chat/completions"]
         headers = {
             "Authorization": f"Bearer {VISION_API_KEY}",
             "Content-Type": "application/json",
@@ -373,10 +381,18 @@ async def _call_vlm(image: PreparedImage, question: str, max_tokens: int) -> str
         extractor = _extract_openai_text
 
     async with httpx.AsyncClient(timeout=VISION_TIMEOUT) as client:
-        resp = await client.post(endpoint, headers=headers, json=payload)
-        resp.raise_for_status()
+        last_response: httpx.Response | None = None
+        for endpoint in endpoints:
+            resp = await client.post(endpoint, headers=headers, json=payload)
+            last_response = resp
+            if resp.status_code == 404 and endpoint != endpoints[-1]:
+                continue
+            resp.raise_for_status()
+            return extractor(resp.json())
 
-    return extractor(resp.json())
+    if last_response is not None:
+        last_response.raise_for_status()
+    raise RuntimeError("Vision API request failed before receiving a response.")
 
 
 # ---------------------------------------------------------------------------
@@ -386,10 +402,38 @@ async def _call_vlm(image: PreparedImage, question: str, max_tokens: int) -> str
 def _clean_html(raw: str) -> str:
     """Remove markdown code fences the model may have added."""
     text = raw.strip()
+    text = re.sub(r"^\s*<think>.*?</think>\s*", "", text, flags=re.IGNORECASE | re.DOTALL)
     if text.startswith("```"):
         text = re.sub(r"^```(?:html)?\s*\n?", "", text, flags=re.IGNORECASE)
         text = re.sub(r"\n?```\s*$", "", text)
     return text.strip()
+
+
+def _looks_like_missing_image_response(html_text: str) -> bool:
+    if "data-bbox=" in html_text:
+        return False
+    text = re.sub(r"<[^>]+>", " ", html_text).lower()
+    patterns = (
+        "no image",
+        "image not provided",
+        "image was not provided",
+        "no image provided",
+        "no image attached",
+        "did not receive image",
+        "no visual input",
+        "未检测到输入图片",
+        "未检测到传入的图片",
+        "未接收到图片",
+        "未收到图片",
+        "未提供图片",
+        "未附上任何图像",
+        "无图片内容",
+    )
+    return any(pattern in text for pattern in patterns)
+
+
+def _looks_like_semantic_html(html_text: str) -> bool:
+    return bool(re.search(r"<article(?:\s|>)", html_text, flags=re.IGNORECASE))
 
 
 def _extract_metadata_from_html(html_text: str) -> dict[str, Any]:
@@ -498,6 +542,16 @@ async def understand_image(
 
         html_output = await _call_vlm(prepared_image, params.question, params.max_tokens)
         html_output = _clean_html(html_output)
+        if not _looks_like_semantic_html(html_output):
+            raise RuntimeError(
+                "The configured vision model did not return the required semantic HTML. "
+                "Use a vision-capable model/endpoint for VISION_POWER_MODEL."
+            )
+        if _looks_like_missing_image_response(html_output):
+            raise RuntimeError(
+                "The configured vision model did not process the supplied image. "
+                "Use a vision-capable model/endpoint for VISION_POWER_MODEL."
+            )
 
         if params.include_json_metadata:
             metadata = _extract_metadata_from_html(html_output)

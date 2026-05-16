@@ -71,6 +71,31 @@ class PayloadBuilderTests(unittest.TestCase):
         self.assertEqual(block["source"]["type"], "base64")
         self.assertEqual(block["source"]["data"], PNG_B64)
 
+    def test_anthropic_endpoint_supports_base_with_or_without_v1(self):
+        self.assertEqual(
+            server._anthropic_messages_endpoints("https://api.example.com/anthropic"),
+            [
+                "https://api.example.com/anthropic/messages",
+                "https://api.example.com/anthropic/v1/messages",
+            ],
+        )
+        self.assertEqual(
+            server._anthropic_messages_endpoints("https://api.example.com/anthropic/v1"),
+            ["https://api.example.com/anthropic/v1/messages"],
+        )
+
+    def test_clean_html_strips_reasoning_block(self):
+        cleaned = server._clean_html("<think>hidden reasoning</think>\n<article>ok</article>")
+        self.assertEqual(cleaned, "<article>ok</article>")
+
+    def test_missing_image_response_is_detected(self):
+        html = "<article><p>未检测到传入的图片内容，无法进行文字识别。</p></article>"
+        self.assertTrue(server._looks_like_missing_image_response(html))
+
+    def test_semantic_html_requires_article(self):
+        self.assertTrue(server._looks_like_semantic_html("<article data-source=\"vision\"></article>"))
+        self.assertFalse(server._looks_like_semantic_html("无法识别"))
+
 
 if __name__ == "__main__":
     unittest.main()
